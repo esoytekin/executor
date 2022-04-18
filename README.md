@@ -65,7 +65,7 @@ import (
 	"time"
 
 	"gotest.tools/assert"
-    "github.com/esoytekin/executor"
+    	"github.com/esoytekin/executor"
 )
 
 type TaskImpl struct {
