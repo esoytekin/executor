@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-const defaultThreadLimitCount = 6
-
 type taskChanItem struct {
 	idx  int
 	task Task
@@ -31,7 +29,7 @@ func NewSingleThreadTaskExecutor() *TaskExecutor {
 }
 
 func NewTaskExecutor(threadLimit int) *TaskExecutor {
-	taskChan := make(chan taskChanItem, 0)
+	taskChan := make(chan taskChanItem)
 	done := make(chan bool)
 	m := make(chan struct{}, threadLimit)
 	progressC := make(chan int, 100)

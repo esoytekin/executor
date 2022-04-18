@@ -93,8 +93,6 @@ func TestExecutor(t *testing.T) {
 
 	results := e.ExecuteTask(&TaskImpl{1}, &TaskImpl{2}, &TaskImpl{2}, &TaskImpl{3}, &TaskImpl{4}, &TaskImpl{5}, &TaskImpl{6}, &TaskImpl{7}, &TaskImpl{8}, &TaskImpl{9}, &TaskImpl{2})
 
-	// assert.DeepEqual(t, expected, results)
-
 	assert.Equal(t, len(expected), len(results))
 
 	for x := range results {
