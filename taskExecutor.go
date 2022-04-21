@@ -10,8 +10,7 @@ type taskChanItem struct {
 	task Task
 }
 
-// TaskExecutor godoc
-type TaskExecutor struct {
+type taskExecutor struct {
 	taskChan       chan taskChanItem
 	d              chan bool
 	fin            chan bool
@@ -23,16 +22,20 @@ type TaskExecutor struct {
 	cache          sync.Map
 }
 
-func NewSingleThreadTaskExecutor() *TaskExecutor {
+// NewSingleThreadTaskExecutor returns new TaskExecutor instance with single thread limit
+func NewSingleThreadTaskExecutor() *taskExecutor {
 	return NewTaskExecutor(1)
 }
 
-func NewTaskExecutor(threadLimit int) *TaskExecutor {
+// NewTaskExecutor returns new TaskExecutor instance.
+//
+// threadLimit limits thread count.
+func NewTaskExecutor(threadLimit int) *taskExecutor {
 	taskChan := make(chan taskChanItem)
 	done := make(chan bool)
 	m := make(chan struct{}, threadLimit)
 	progressC := make(chan int, 100)
-	return &TaskExecutor{
+	return &taskExecutor{
 		taskChan:    taskChan,
 		d:           done,
 		fin:         make(chan bool),
@@ -42,13 +45,14 @@ func NewTaskExecutor(threadLimit int) *TaskExecutor {
 	}
 }
 
-func (t *TaskExecutor) init(tasks []Task) {
+func (t *taskExecutor) init(tasks []Task) {
 	taskLen := len(tasks)
 	t.results = make([]interface{}, taskLen)
 
 }
 
-func (t *TaskExecutor) ExecuteTask(tasks ...Task) []interface{} {
+// ExecuteTask accepts a list of tasks and executes them in parallel.
+func (t *taskExecutor) ExecuteTask(tasks ...Task) []interface{} {
 
 	t.init(tasks)
 
@@ -64,16 +68,16 @@ func (t *TaskExecutor) ExecuteTask(tasks ...Task) []interface{} {
 
 }
 
-func (t *TaskExecutor) wait() {
+func (t *taskExecutor) wait() {
 	<-t.fin
 }
 
-func (t *TaskExecutor) done() {
+func (t *taskExecutor) done() {
 
 	t.d <- true
 }
 
-func (t *TaskExecutor) produce(tasks []Task) {
+func (t *taskExecutor) produce(tasks []Task) {
 
 	defer close(t.taskChan)
 
@@ -83,7 +87,7 @@ func (t *TaskExecutor) produce(tasks []Task) {
 	}
 }
 
-func (t *TaskExecutor) progressBar() {
+func (t *taskExecutor) progressBar() {
 	ticker := time.NewTicker(1 * time.Second)
 
 	taskLen := len(t.results)
@@ -104,7 +108,7 @@ func (t *TaskExecutor) progressBar() {
 	}
 }
 
-func (t *TaskExecutor) operationComplete() {
+func (t *taskExecutor) operationComplete() {
 
 	taskLen := len(t.results)
 
@@ -120,7 +124,7 @@ func (t *TaskExecutor) operationComplete() {
 
 }
 
-func (t *TaskExecutor) consumeTasks() {
+func (t *taskExecutor) consumeTasks() {
 
 	for x := range t.taskChan {
 		t.threadLimit <- struct{}{}
@@ -138,7 +142,10 @@ func (t *TaskExecutor) consumeTasks() {
 
 }
 
-func (t *TaskExecutor) Progress(progressF func(x int)) {
+// Progress accepts a function and passes current progress
+// to that function.
+// Triggered every second.
+func (t *taskExecutor) Progress(progressF func(x int)) {
 	go func() {
 
 		isClosed := false
