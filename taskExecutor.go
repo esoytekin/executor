@@ -15,7 +15,6 @@ type TaskExecutor struct {
 	taskChan       chan taskChanItem
 	d              chan bool
 	fin            chan bool
-	taskLen        int
 	results        []interface{}
 	threadLimit    chan struct{}
 	locker         sync.Mutex
@@ -44,8 +43,8 @@ func NewTaskExecutor(threadLimit int) *TaskExecutor {
 }
 
 func (t *TaskExecutor) init(tasks []Task) {
-	t.taskLen = len(tasks)
-	t.results = make([]interface{}, t.taskLen)
+	taskLen := len(tasks)
+	t.results = make([]interface{}, taskLen)
 
 }
 
@@ -87,10 +86,12 @@ func (t *TaskExecutor) produce(tasks []Task) {
 func (t *TaskExecutor) progressBar() {
 	ticker := time.NewTicker(1 * time.Second)
 
+	taskLen := len(t.results)
+
 	for {
 		select {
 		case <-ticker.C:
-			progress := t.operationCount * 100 / t.taskLen
+			progress := t.operationCount * 100 / taskLen
 			t.ProgressC <- progress
 
 		case <-t.d:
@@ -105,11 +106,13 @@ func (t *TaskExecutor) progressBar() {
 
 func (t *TaskExecutor) operationComplete() {
 
+	taskLen := len(t.results)
+
 	t.locker.Lock()
 
 	t.operationCount++
 
-	if t.operationCount == t.taskLen {
+	if t.operationCount == taskLen {
 		t.done()
 	}
 
