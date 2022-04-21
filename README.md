@@ -1,4 +1,5 @@
-# Parallel Task Executor for GO
+# Parallel Task Executor for GO ![CI status](https://github.com/esoytekin/executor/actions/workflows/go.yml/badge.svg)
+
 
 Executes tasks in parallel with `MemoizableFuture` support.
 
