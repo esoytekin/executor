@@ -19,8 +19,8 @@ func (r *ReverseTask) Hash(f func(string) int) []int {
 	return []int{int(r.input)}
 }
 
-func (r *ReverseTask) Exec() int32 {
-	return Reverse(r.input)
+func (r *ReverseTask) Exec() (int32, error) {
+	return Reverse(r.input), nil
 }
 
 func TestReverseInt(t *testing.T) {
@@ -67,7 +67,11 @@ func TestReverseInt(t *testing.T) {
 		fmt.Println("progress", x)
 	})
 
-	results := exec.ExecuteTask(tasks...)
+	results, errs := exec.ExecuteTask(tasks...)
+
+	if len(errs) > 0 {
+		t.Error("not expected errors", errs)
+	}
 
 	for x := range expected {
 		assert.Equal(t, expected[x], results[x])

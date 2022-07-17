@@ -20,7 +20,7 @@ func NewMemoizableFutureTask[V any](t Task[V], cache *sync.Map) Task[V] {
 }
 
 // Exec godoc
-func (m *MemoizableFutureTask[V]) Exec() V {
+func (m *MemoizableFutureTask[V]) Exec() (V, error) {
 
 	hashVal := getHash(m.Hash(hashStr))
 

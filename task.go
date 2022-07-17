@@ -3,7 +3,7 @@ package executor
 // Task godoc
 type Task[V any] interface {
 	// Exec godoc
-	Exec() V
+	Exec() (V, error)
 
 	// Hash godoc
 	// is used for memoization

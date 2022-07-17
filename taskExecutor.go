@@ -15,6 +15,7 @@ type taskExecutor[V any] struct {
 	d              chan bool
 	fin            chan bool
 	results        []V
+	errors         []error
 	threadLimit    chan struct{}
 	locker         sync.Mutex
 	operationCount int
@@ -48,11 +49,12 @@ func NewTaskExecutor[V any](threadLimit int) *taskExecutor[V] {
 func (t *taskExecutor[V]) init(tasks []Task[V]) {
 	taskLen := len(tasks)
 	t.results = make([]V, taskLen)
+	t.errors = []error{}
 
 }
 
 // ExecuteTask accepts a list of tasks and executes them in parallel.
-func (t *taskExecutor[V]) ExecuteTask(tasks ...Task[V]) []V {
+func (t *taskExecutor[V]) ExecuteTask(tasks ...Task[V]) ([]V, []error) {
 
 	t.init(tasks)
 
@@ -64,7 +66,7 @@ func (t *taskExecutor[V]) ExecuteTask(tasks ...Task[V]) []V {
 
 	t.wait()
 
-	return t.results
+	return t.results, t.errors
 
 }
 
@@ -131,7 +133,13 @@ func (t *taskExecutor[V]) consumeTasks() {
 
 		go func(i taskChanItem[V]) {
 
-			t.results[i.idx] = i.task.Exec()
+			v, err := i.task.Exec()
+
+			if err != nil {
+				t.errors = append(t.errors, err)
+			} else {
+				t.results[i.idx] = v
+			}
 
 			t.operationComplete()
 

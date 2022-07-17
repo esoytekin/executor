@@ -3,14 +3,15 @@ package executor
 // FutureTask godoc
 type FutureTask[V any] struct {
 	result V
+	err    error
 	signal chan struct{}
 }
 
 // Get godoc
-func (f *FutureTask[V]) Get() V {
+func (f *FutureTask[V]) Get() (V, error) {
 
 	<-f.signal
-	return f.result
+	return f.result, f.err
 
 }
 
@@ -22,7 +23,7 @@ func NewFutureTask[V any](t Task[V]) *FutureTask[V] {
 
 	go func() {
 		defer close(f.signal)
-		f.result = t.Exec()
+		f.result, f.err = t.Exec()
 	}()
 
 	return f

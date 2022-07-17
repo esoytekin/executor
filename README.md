@@ -14,7 +14,7 @@ tasks should implement `executor.Task` interface
 ```go
 type Task[V any] interface {
 	// Exec godoc
-	Exec() V
+	Exec() (V, error)
 
 	// Hash godoc
 	// is used for memoization
@@ -36,9 +36,9 @@ type TaskImpl struct {
 	input int
 }
 
-func (t *TaskImpl) Exec() int {
+func (t *TaskImpl) Exec() ( int, error ) {
 	time.Sleep(3 * time.Second)
-	return t.input * t.input
+	return t.input * t.input, nil
 }
 
 func (t *TaskImpl) Hash(f func(string) int) []int {
@@ -49,7 +49,7 @@ func main(){
 
     taskItem := &TaskImpl{1}
     ft := executor.NewFutureTask[int](taskItem)
-    result := ft.Get() // blocks execute operation
+    result,_ := ft.Get() // blocks execute operation
     fmt.Println("result", result)
 }
 ```
@@ -72,7 +72,7 @@ type TaskImpl struct {
 	input int
 }
 
-func (t *TaskImpl) Exec() int {
+func (t *TaskImpl) Exec() ( int, error ) {
 	time.Sleep(3 * time.Second)
 	return t.input * t.input
 }
@@ -91,7 +91,7 @@ func TestExecutor(t *testing.T) {
 		fmt.Println("progress", p)
 	})
 
-	results := e.ExecuteTask(&TaskImpl{1}, &TaskImpl{2}, &TaskImpl{2}, &TaskImpl{3}, &TaskImpl{4}, &TaskImpl{5}, &TaskImpl{6}, &TaskImpl{7}, &TaskImpl{8}, &TaskImpl{9}, &TaskImpl{2})
+	results, _:= e.ExecuteTask(&TaskImpl{1}, &TaskImpl{2}, &TaskImpl{2}, &TaskImpl{3}, &TaskImpl{4}, &TaskImpl{5}, &TaskImpl{6}, &TaskImpl{7}, &TaskImpl{8}, &TaskImpl{9}, &TaskImpl{2})
 
 	assert.Equal(t, len(expected), len(results))
 
