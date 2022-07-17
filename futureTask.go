@@ -1,13 +1,13 @@
 package executor
 
 // FutureTask godoc
-type FutureTask struct {
-	result interface{}
+type FutureTask[V any] struct {
+	result V
 	signal chan struct{}
 }
 
 // Get godoc
-func (f *FutureTask) Get() interface{} {
+func (f *FutureTask[V]) Get() V {
 
 	<-f.signal
 	return f.result
@@ -15,8 +15,8 @@ func (f *FutureTask) Get() interface{} {
 }
 
 // NewFutureTask godoc
-func NewFutureTask(t Task) *FutureTask {
-	f := new(FutureTask)
+func NewFutureTask[V any](t Task[V]) *FutureTask[V] {
+	f := new(FutureTask[V])
 
 	f.signal = make(chan struct{})
 

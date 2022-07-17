@@ -5,16 +5,16 @@ import (
 	"time"
 )
 
-type taskChanItem struct {
+type taskChanItem[V any] struct {
 	idx  int
-	task Task
+	task Task[V]
 }
 
-type taskExecutor struct {
-	taskChan       chan taskChanItem
+type taskExecutor[V any] struct {
+	taskChan       chan taskChanItem[V]
 	d              chan bool
 	fin            chan bool
-	results        []interface{}
+	results        []V
 	threadLimit    chan struct{}
 	locker         sync.Mutex
 	operationCount int
@@ -23,19 +23,19 @@ type taskExecutor struct {
 }
 
 // NewSingleThreadTaskExecutor returns new TaskExecutor instance with single thread limit
-func NewSingleThreadTaskExecutor() *taskExecutor {
-	return NewTaskExecutor(1)
+func NewSingleThreadTaskExecutor[V any]() *taskExecutor[V] {
+	return NewTaskExecutor[V](1)
 }
 
 // NewTaskExecutor returns new TaskExecutor instance.
 //
 // threadLimit limits thread count.
-func NewTaskExecutor(threadLimit int) *taskExecutor {
-	taskChan := make(chan taskChanItem)
+func NewTaskExecutor[V any](threadLimit int) *taskExecutor[V] {
+	taskChan := make(chan taskChanItem[V])
 	done := make(chan bool)
 	m := make(chan struct{}, threadLimit)
 	progressC := make(chan int, 100)
-	return &taskExecutor{
+	return &taskExecutor[V]{
 		taskChan:    taskChan,
 		d:           done,
 		fin:         make(chan bool),
@@ -45,14 +45,14 @@ func NewTaskExecutor(threadLimit int) *taskExecutor {
 	}
 }
 
-func (t *taskExecutor) init(tasks []Task) {
+func (t *taskExecutor[V]) init(tasks []Task[V]) {
 	taskLen := len(tasks)
-	t.results = make([]interface{}, taskLen)
+	t.results = make([]V, taskLen)
 
 }
 
 // ExecuteTask accepts a list of tasks and executes them in parallel.
-func (t *taskExecutor) ExecuteTask(tasks ...Task) []interface{} {
+func (t *taskExecutor[V]) ExecuteTask(tasks ...Task[V]) []V {
 
 	t.init(tasks)
 
@@ -68,26 +68,26 @@ func (t *taskExecutor) ExecuteTask(tasks ...Task) []interface{} {
 
 }
 
-func (t *taskExecutor) wait() {
+func (t *taskExecutor[V]) wait() {
 	<-t.fin
 }
 
-func (t *taskExecutor) done() {
+func (t *taskExecutor[V]) done() {
 
 	t.d <- true
 }
 
-func (t *taskExecutor) produce(tasks []Task) {
+func (t *taskExecutor[V]) produce(tasks []Task[V]) {
 
 	defer close(t.taskChan)
 
 	for idx, x := range tasks {
 		memoizableT := NewMemoizableFutureTask(x, &t.cache)
-		t.taskChan <- taskChanItem{idx, memoizableT}
+		t.taskChan <- taskChanItem[V]{idx, memoizableT}
 	}
 }
 
-func (t *taskExecutor) progressBar() {
+func (t *taskExecutor[V]) progressBar() {
 	ticker := time.NewTicker(1 * time.Second)
 
 	taskLen := len(t.results)
@@ -108,7 +108,7 @@ func (t *taskExecutor) progressBar() {
 	}
 }
 
-func (t *taskExecutor) operationComplete() {
+func (t *taskExecutor[V]) operationComplete() {
 
 	taskLen := len(t.results)
 
@@ -124,12 +124,12 @@ func (t *taskExecutor) operationComplete() {
 
 }
 
-func (t *taskExecutor) consumeTasks() {
+func (t *taskExecutor[V]) consumeTasks() {
 
 	for x := range t.taskChan {
 		t.threadLimit <- struct{}{}
 
-		go func(i taskChanItem) {
+		go func(i taskChanItem[V]) {
 
 			t.results[i.idx] = i.task.Exec()
 
@@ -145,7 +145,7 @@ func (t *taskExecutor) consumeTasks() {
 // Progress accepts a function and passes current progress
 // to that function.
 // Triggered every second.
-func (t *taskExecutor) Progress(progressF func(x int)) {
+func (t *taskExecutor[V]) Progress(progressF func(x int)) {
 	go func() {
 
 		isClosed := false

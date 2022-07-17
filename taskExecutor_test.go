@@ -12,7 +12,7 @@ type TaskImpl struct {
 	input int
 }
 
-func (t *TaskImpl) Exec() interface{} {
+func (t *TaskImpl) Exec() int {
 	time.Sleep(3 * time.Second)
 	return t.input * t.input
 }
@@ -25,7 +25,7 @@ func TestLimitedThread(t *testing.T) {
 
 	expected := []int{1, 4, 4, 9, 16, 25, 36, 49, 64, 81, 4}
 
-	e := NewTaskExecutor(100)
+	e := NewTaskExecutor[int](100)
 
 	e.Progress(func(p int) {
 		fmt.Println("progress", p)
@@ -36,7 +36,7 @@ func TestLimitedThread(t *testing.T) {
 	assert.Equal(t, len(expected), len(results))
 
 	for x := range results {
-		assert.Equal(t, expected[x], results[x].(int))
+		assert.Equal(t, expected[x], results[x])
 	}
 
 }

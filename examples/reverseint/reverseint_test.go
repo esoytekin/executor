@@ -19,7 +19,7 @@ func (r *ReverseTask) Hash(f func(string) int) []int {
 	return []int{int(r.input)}
 }
 
-func (r *ReverseTask) Exec() interface{} {
+func (r *ReverseTask) Exec() int32 {
 	return Reverse(r.input)
 }
 
@@ -47,9 +47,9 @@ func TestReverseInt(t *testing.T) {
 		},
 	}
 
-	exec := executor.NewTaskExecutor(100)
+	exec := executor.NewTaskExecutor[int32](100)
 
-	var tasks []executor.Task
+	var tasks []executor.Task[int32]
 
 	var expected []int32
 
@@ -70,7 +70,7 @@ func TestReverseInt(t *testing.T) {
 	results := exec.ExecuteTask(tasks...)
 
 	for x := range expected {
-		assert.Equal(t, expected[x], results[x].(int32))
+		assert.Equal(t, expected[x], results[x])
 	}
 
 }

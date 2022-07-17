@@ -7,20 +7,20 @@ import (
 
 var mutex sync.Mutex
 
-type MemoizableFutureTask struct {
-	taskItem Task
+type MemoizableFutureTask[V any] struct {
+	taskItem Task[V]
 	cache    *sync.Map
 }
 
-func NewMemoizableFutureTask(t Task, cache *sync.Map) Task {
-	return &MemoizableFutureTask{
+func NewMemoizableFutureTask[V any](t Task[V], cache *sync.Map) Task[V] {
+	return &MemoizableFutureTask[V]{
 		taskItem: t,
 		cache:    cache,
 	}
 }
 
 // Exec godoc
-func (m *MemoizableFutureTask) Exec() interface{} {
+func (m *MemoizableFutureTask[V]) Exec() V {
 
 	hashVal := getHash(m.Hash(hashStr))
 
@@ -41,13 +41,13 @@ func (m *MemoizableFutureTask) Exec() interface{} {
 
 	}
 
-	return result.(*FutureTask).Get()
+	return result.(*FutureTask[V]).Get()
 }
 
 // Hash godoc
 // is used for memoization
 // generate it using input parameters
-func (m *MemoizableFutureTask) Hash(hashStr func(string) int) []int {
+func (m *MemoizableFutureTask[V]) Hash(hashStr func(string) int) []int {
 	return m.taskItem.Hash(hashStr)
 }
 

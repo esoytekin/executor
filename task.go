@@ -1,9 +1,9 @@
 package executor
 
 // Task godoc
-type Task interface {
+type Task[V any] interface {
 	// Exec godoc
-	Exec() interface{}
+	Exec() V
 
 	// Hash godoc
 	// is used for memoization

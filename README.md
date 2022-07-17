@@ -1,6 +1,5 @@
 # Parallel Task Executor for GO ![CI status](https://github.com/esoytekin/executor/actions/workflows/go.yml/badge.svg)
 
-
 Executes tasks in parallel with `MemoizableFuture` support.
 
 ## Install
@@ -13,9 +12,9 @@ Executes tasks in parallel with `MemoizableFuture` support.
 tasks should implement `executor.Task` interface
 
 ```go
-type Task interface {
+type Task[V any] interface {
 	// Exec godoc
-	Exec() interface{}
+	Exec() V
 
 	// Hash godoc
 	// is used for memoization
@@ -37,7 +36,7 @@ type TaskImpl struct {
 	input int
 }
 
-func (t *TaskImpl) Exec() interface{} {
+func (t *TaskImpl) Exec() int {
 	time.Sleep(3 * time.Second)
 	return t.input * t.input
 }
@@ -49,7 +48,7 @@ func (t *TaskImpl) Hash(f func(string) int) []int {
 func main(){
 
     taskItem := &TaskImpl{1}
-    ft := executor.NewFutureTask(taskItem)
+    ft := executor.NewFutureTask[int](taskItem)
     result := ft.Get() // blocks execute operation
     fmt.Println("result", result)
 }
@@ -73,7 +72,7 @@ type TaskImpl struct {
 	input int
 }
 
-func (t *TaskImpl) Exec() interface{} {
+func (t *TaskImpl) Exec() int {
 	time.Sleep(3 * time.Second)
 	return t.input * t.input
 }
@@ -86,7 +85,7 @@ func TestExecutor(t *testing.T) {
 
 	expected := []int{1, 4, 4, 9, 16, 25, 36, 49, 64, 81, 4}
 
-	e := executor.NewTaskExecutor(100)
+	e := executor.NewTaskExecutor[int](100)
 
 	e.Progress(func(p int) {
 		fmt.Println("progress", p)
@@ -97,7 +96,7 @@ func TestExecutor(t *testing.T) {
 	assert.Equal(t, len(expected), len(results))
 
 	for x := range results {
-		assert.Equal(t, expected[x], results[x].(int))
+		assert.Equal(t, expected[x], results[x])
 	}
 
 }
